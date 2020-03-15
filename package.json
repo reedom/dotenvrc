@@ -11,14 +11,12 @@
     "clean": "rimraf lib/*",
     "build": "npm-run-all clean tsc",
     "lint": "eslint --ext .ts,.js src/",
-    "format": "prettier --write 'src/**/*.{ts,js}'",
     "precommit": "lint-staged",
     "test": "jest"
   },
   "lint-staged": {
     "src/**/*.{ts,js}": [
       "eslint --ext .ts,.js",
-      "prettier --write",
       "git add"
     ]
   },
@@ -55,13 +53,10 @@
     "@typescript-eslint/eslint-plugin": "^2.3.3",
     "@typescript-eslint/parser": "^2.3.3",
     "eslint": "^6.5.1",
-    "eslint-config-prettier": "^6.4.0",
-    "eslint-plugin-prettier": "^3.1.1",
     "husky": "^3.0.8",
     "jest": "^25.1.0",
     "lint-staged": "^9.4.2",
     "npm-run-all": "^4.1.5",
-    "prettier": "^1.18.2",
     "rimraf": "^3.0.0",
     "ts-jest": "^25.2.1",
     "ts-node": "^8.4.1",
