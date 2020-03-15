@@ -13,6 +13,7 @@ export interface ExpandValueContext {
   predefined: ProcessEnv;
   exported: ProcessEnv;
   internal: ProcessEnv;
+  temporal: ProcessEnv;
   writer: TextWriter;
 }
 
@@ -21,17 +22,20 @@ export function createContext({
   predefined = {},
   exported = {},
   internal = {},
+  temporal = {},
 }: {
   cwd: string;
   predefined?: ProcessEnv;
   exported?: ProcessEnv;
   internal?: ProcessEnv;
+  temporal?: ProcessEnv;
 }): ExpandValueContext {
   return {
     cwd,
     predefined,
     exported,
     internal,
+    temporal,
     writer: new TextWriter(),
   };
 }
@@ -76,6 +80,9 @@ export function solveParam(param: string, context: ExpandValueContext): string {
     return context.exported[param]!;
   }
   if (Object.prototype.hasOwnProperty.call(context.internal, param)) {
+    return context.internal[param]!;
+  }
+  if (Object.prototype.hasOwnProperty.call(context.temporal, param)) {
     return context.internal[param]!;
   }
   return '';
