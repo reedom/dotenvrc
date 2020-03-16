@@ -40,28 +40,31 @@ export function createContext({
   };
 }
 
-export interface Readers {
+interface ExpandValueState {
   text: string;
+  valueHeadPos: number;
   scanner: TextScanner;
   reader: TextReader;
+  quote: QuoteType;
 }
 
 export function expandValue(
   text: string,
+  valueHeadPos: number,
   paramExpansions: AST_ParameterExpansion[] | null,
   context: ExpandValueContext,
 ): string {
-  const [strippedText] = stripQuotes(text);
-  const scanner = createTextScanner(strippedText);
-  const reader = createTextReader(strippedText);
-  const readers = { text: strippedText, scanner, reader };
+  const scanner = createTextScanner(text);
+  const reader = createTextReader(text);
+  const state: ExpandValueState = { text: text, valueHeadPos, scanner, reader, quote: false };
   context.writer.reset();
 
-  const handleParam = createParamHandler(paramExpansions, readers, context);
-  const handleBackslash = createBackslashHandler(readers, context);
+  const handleParam = createParamHandler(paramExpansions, state, context);
+  const handleQuote = createQuoteHandler(state, context);
+  const handleBackslash = createBackslashHandler(state, context);
 
   while (!scanner.eof()) {
-    if (handleParam() || handleBackslash()) continue;
+    if (handleParam() || handleQuote() || handleBackslash()) continue;
     scanner.advance();
   }
 
@@ -69,7 +72,7 @@ export function expandValue(
   return context.writer.getString();
 }
 
-export function solveParam(param: string, context: ExpandValueContext): string {
+export function solveParamExpansion(param: string, context: ExpandValueContext): string {
   if (param === 'PWD') {
     return context.cwd;
   }
@@ -90,7 +93,7 @@ export function solveParam(param: string, context: ExpandValueContext): string {
 
 export function createParamHandler(
   paramExpansions: AST_ParameterExpansion[] | null,
-  { reader, scanner }: Readers,
+  { reader, scanner }: ExpandValueState,
   context: ExpandValueContext,
 ): () => boolean {
   const iterExpansion = paramExpansionReader(paramExpansions || []);
@@ -103,7 +106,7 @@ export function createParamHandler(
     if (scanner.pos() !== nextParamExpansionPos) return false;
 
     writer.write(reader.readBy(scanner.pos()));
-    writer.write(solveParam(paramExpansion.value.parameter, context));
+    writer.write(solveParamExpansion(paramExpansion.value.parameter, context));
     scanner.advanceTo(paramExpansion.value.loc.end + 1);
     reader.skipTo(paramExpansion.value.loc.end + 1);
 
@@ -113,12 +116,46 @@ export function createParamHandler(
   };
 }
 
-export function createBackslashHandler(
-  { text, reader, scanner }: Readers,
-  context: ExpandValueContext,
+export function createQuoteHandler(
+  state: ExpandValueState,
+  { writer }: ExpandValueContext,
 ): () => boolean {
-  const { writer } = context;
+  const { reader, scanner } = state;
 
+  const quoteTypeOf = (char: string): QuoteType => {
+    if (char === '"' || char === "'") return char;
+    return false;
+  };
+
+  return (): boolean => {
+    const ch = scanner.getChar();
+    const current = quoteTypeOf(ch);
+
+    if (state.quote) {
+      // The current value is quoted. We're looking for a paired closing quote char.
+      if (state.quote !== current) return false;
+      // Now it's closing.
+      state.quote = false;
+    } else {
+      // The current value is out of quote. If the current char is a quote, then it starts.
+      if (!current) return false;
+      // Now it's opening.
+      state.quote = current;
+    }
+
+    // Sync reader and writer.
+    writer.write(reader.readBy(scanner.pos()));
+    // Skip the current quotation char.
+    reader.skip(1);
+    scanner.advance();
+    return true;
+  };
+}
+
+export function createBackslashHandler(
+  { text, valueHeadPos, reader, scanner }: ExpandValueState,
+  { writer }: ExpandValueContext,
+): () => boolean {
   return (): boolean => {
     if (scanner.getChar() !== '\\') return false;
     scanner.advance();
@@ -136,7 +173,9 @@ export function createBackslashHandler(
         writer.write(String.fromCodePoint(0x07));
         return true;
       case 'b': // backspace
-        writer.chop();
+        if (valueHeadPos < writer.length()){
+          writer.chop();
+        }
         return true;
       case 'n': // newline
         writer.write('\n');
@@ -228,21 +267,4 @@ export function readHexDigits(
   const digits = i - beg;
   const val = parseInt(text.slice(beg, i), 16);
   return { digits, val };
-}
-
-/**
- * Remove quotation marks that wrapping the specified text.
- *
- * note: It doesn't care whether the text is precisely quoted, i.e quoted by same char
- *       since otherwise it shouldn't have worked in other context(e.g. shell, direnv).
- */
-export function stripQuotes(text: string): [string, QuoteType] {
-  switch (text[0]) {
-    case '"':
-      return [text.slice(1, text.length - 1), 'double'];
-    case "'":
-      return [text.slice(1, text.length - 1), 'single'];
-    default:
-      return [text, false];
-  }
 }

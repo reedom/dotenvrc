@@ -9,6 +9,10 @@ export default class TextWriter {
     this.wrote += this.buffer.write(str, this.wrote);
   }
 
+  length(): number {
+    return this.wrote;
+  }
+
   chop() {
     if (0 < this.wrote) this.wrote--;
   }
