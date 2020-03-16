@@ -1,4 +1,3 @@
-import { readFileSync } from 'fs';
 import { createContext, expandValue, ExpandValueContext } from '#/internal/expandValue';
 import parse, {
   AST_AssignmentWord,
@@ -8,11 +7,6 @@ import parse, {
   AST_Word
 } from 'bash-parser';
 import ProcessEnv = NodeJS.ProcessEnv;
-
-
-const code = readFileSync('.envrc');
-const ret = parseEnvContent(code.toString(), { exportedOnly: true, cwd: __dirname });
-console.log(JSON.stringify(ret, null, 2));
 
 export interface EnvContentParserOptions {
   /** If true, `parseEnvContent` returns variables defined by `export var=val` expression.
@@ -33,9 +27,14 @@ export function parseEnvContent(code: string, options: EnvContentParserOptions):
   const { exportedOnly, cwd, predefined } = options;
   const context = createContext({ cwd, predefined });
 
-  parse(code)
-    .commands.filter(command => command.type === 'Command')
-    .forEach(command => parseTopLevelCommand(context, command as AST_CommandCommand));
+  const ast = parse(code);
+  console.log(JSON.stringify(ast, null, 2));
+  ast.commands.filter(command => {
+    return command.type === 'Command';
+  })
+    .forEach(command => {
+      parseTopLevelCommand(context, command as AST_CommandCommand)
+    });
 
   return exportedOnly ? context.exported : context.internal;
 }
@@ -96,13 +95,21 @@ function extractAssignment(
   context: ExpandValueContext,
   node: AST_AssignmentWord | AST_Word
 ): [string, string | undefined] {
-  let [key, value] = node.text.split('=', 1);
-  if (typeof value === 'undefined') {
-    return [key, value];
+  const { text } = node;
+  const pos = text.indexOf('=');
+  if (pos < 0) {
+    // e.g.  [export] var1
+    return [text, undefined];
+  }
+  if (pos === text.length - 1) {
+    // e.g. [export] var1=
+    return [text.slice(0, text.length - 1), ''];
   }
 
+  // e.g. [export] var1=val
   const paramExpansions = collectParamExpansions(node);
-  return [key, expandValue(value, paramExpansions, context)];
+  const expanded = expandValue(text, pos + 1, paramExpansions, context);
+  return [expanded.slice(0, pos), expanded.slice(pos + 1)];
 }
 
 /**
@@ -115,13 +122,9 @@ function parseTemporalAssignments(
   context.temporal = {};
   assignmentPrefixes.forEach(node => {
     let [key, value] = extractAssignment(context, node);
-    if (typeof value === 'undefined') {
-      context.temporal[key] = '';
-      return;
+    if (typeof value !== 'undefined') {
+      context.temporal[key] = value;
     }
-
-    const paramExpansions = collectParamExpansions(node);
-    context.temporal[key] = expandValue(value, paramExpansions, context);
   });
 }
 
