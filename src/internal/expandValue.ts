@@ -91,7 +91,7 @@ export function solveParamExpansion(param: string, context: ExpandValueContext):
     return context.internal[param]!;
   }
   if (Object.prototype.hasOwnProperty.call(context.temporal, param)) {
-    return context.internal[param]!;
+    return context.temporal[param]!;
   }
   return '';
 }
