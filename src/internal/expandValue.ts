@@ -1,3 +1,30 @@
+// \n means newline
+// \r means return
+// \t means tab
+// \v means vertical tab
+// \b means backspace
+// \a means "alert" (beep or flash)
+// \0xx translates to the octal ASCII equivalent of 0xx
+// \u takes four hexadecimal digits, e.g. \u2620 ☠
+// \U takes eight hexadecimal digits, e.g. \U0001f602 😂
+// \\ turns to a single back slash
+// \  if a line ends with a back slash, the value part continues to the next line
+// $VAR, ${VAR} variable reference
+
+// [not support]
+// `      shell command execution
+// $()    shell command execution
+// $(( )) Arithmetic expansion
+// !      shell history expansion
+// ${...} a series of variable calculation e.g. ${#var}, ${var:-val}, etc.
+
+// This package supports escaping syntax partially while it's too hard since the
+// real logic seems taking heuristic approaches.
+// https://linux.die.net/abs-guide/escapingsection.html
+// https://stackoverflow.com/questions/6697753/difference-between-single-and-double-quotes-in-bash
+// https://www.gnu.org/software/bash/manual/html_node/Shell-Expansions.html#Shell-Expansions
+// https://devhints.io/bash
+
 import ProcessEnv = NodeJS.ProcessEnv;
 import { AST_ParameterExpansion } from 'bash-parser';
 import {

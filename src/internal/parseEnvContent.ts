@@ -1,3 +1,20 @@
+// [Bash man page of export]
+// Syntax
+// export [-fn] [name[=value]]
+//
+// export -p
+//
+// Options
+// -f   The names refer to shell functions;
+// otherwise the names refer to shell variables.
+//
+//   value   The value of the variable is set to value.
+//
+// -n   No longer mark each name for export.
+//
+// -p   Print a list of all the names exported in this shell.
+//   This is also the default action if no name is given.
+
 import { createContext, expandValue, ExpandValueContext } from './expandValue';
 import parse, {
   AST_AssignmentWord,
