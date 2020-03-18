@@ -45,6 +45,7 @@ interface ExpandValueState {
   valueHeadPos: number;
   scanner: TextScanner;
   reader: TextReader;
+  quote: QuoteType;
 }
 
 export function expandValue(
@@ -55,14 +56,15 @@ export function expandValue(
 ): string {
   const scanner = createTextScanner(text);
   const reader = createTextReader(text);
-  const state: ExpandValueState = { text: text, valueHeadPos, scanner, reader };
+  const state: ExpandValueState = { text: text, valueHeadPos, scanner, reader, quote: false };
   context.writer.reset();
 
   const handleParam = createParamHandler(paramExpansions, state, context);
+  const handleQuote = createQuoteHandler(state, context);
   const handleBackslash = createBackslashHandler(state, context);
 
   while (!scanner.eof()) {
-    if (handleParam() || handleBackslash()) continue;
+    if (handleParam() || handleQuote() || handleBackslash()) continue;
     scanner.advance();
   }
 
@@ -110,6 +112,42 @@ export function createParamHandler(
 
     paramExpansion = iterExpansion.next();
     nextParamExpansionPos = paramExpansion.done ? -1 : paramExpansion.value.loc.start;
+    return true;
+  };
+}
+
+export function createQuoteHandler(
+  state: ExpandValueState,
+  { writer }: ExpandValueContext,
+): () => boolean {
+  const { reader, scanner } = state;
+
+  const quoteTypeOf = (char: string): QuoteType => {
+    if (char === '"' || char === "'") return char;
+    return false;
+  };
+
+  return (): boolean => {
+    const ch = scanner.getChar();
+    const current = quoteTypeOf(ch);
+
+    if (state.quote) {
+      // The current value is quoted. We're looking for a paired closing quote char.
+      if (state.quote !== current) return false;
+      // Now it's closing.
+      state.quote = false;
+    } else {
+      // The current value is out of quote. If the current char is a quote, then it starts.
+      if (!current) return false;
+      // Now it's opening.
+      state.quote = current;
+    }
+
+    // Sync reader and writer.
+    writer.write(reader.readBy(scanner.pos()));
+    // Skip the current quotation char.
+    reader.skip(1);
+    scanner.advance();
     return true;
   };
 }
