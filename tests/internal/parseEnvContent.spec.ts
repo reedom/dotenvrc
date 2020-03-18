@@ -22,6 +22,12 @@ describe('parseEnvContent', () => {
     expect(actual).toEqual({PORT: '80'});
   });
 
+  it('should get an empty string for an empty value', () => {
+    const code = `export NAME=`;
+    const actual = parseEnvContent(code, optExportedOnly());
+    expect(actual).toEqual({NAME: ''});
+  });
+
   it('should resolve variable references', () => {
     const code = `
     PORT=80 PATH=/top
