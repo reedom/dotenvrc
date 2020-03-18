@@ -3,7 +3,7 @@
     "declaration": true,
     "module": "commonjs",
     "target": "ES2015",
-    "outDir": "./lib",
+    "outDir": "./dist",
     "strict": true,
     "baseUrl": "./src/",
     "esModuleInterop": true
