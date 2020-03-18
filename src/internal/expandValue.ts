@@ -60,7 +60,12 @@ export function expandValue(
   context.writer.reset();
 
   const handleParam = createParamHandler(paramExpansions, state, context);
-  const handleQuote = createQuoteHandler(state, context);
+  // Sadly, `bash-parser` removes quotes by itself
+  // "only if all of the substitutions found in a word are solved."
+  // https://github.com/vorpaljs/bash-parser/issues/29
+  // So, we need to remove quotes conditionally, i.g. only if `paramExpansions` contains hints.
+  const hasParamExpansions = paramExpansions && paramExpansions.length;
+  const handleQuote = hasParamExpansions ? createQuoteHandler(state, context) : () => false;
   const handleBackslash = createBackslashHandler(state, context);
 
   while (!scanner.eof()) {
