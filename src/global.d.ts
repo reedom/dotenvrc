@@ -1,0 +1,3 @@
+interface EnvConfig {
+  filename?: string;
+}
