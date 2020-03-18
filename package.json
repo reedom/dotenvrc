@@ -1,6 +1,6 @@
 {
   "name": "dotenvrc",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Read .envrc",
   "main": "index.js",
   "scripts": {
@@ -9,7 +9,7 @@
     "tsc": "tsc",
     "watch": "tsc -w",
     "clean": "rimraf dist/*",
-    "build": "npm-run-all clean tsc && cp package.json dist/",
+    "build": "npm-run-all clean tsc && cp package.json README.md LICENSE dist/",
     "lint": "eslint --ext .ts,.js src/",
     "precommit": "lint-staged",
     "test": "jest"
