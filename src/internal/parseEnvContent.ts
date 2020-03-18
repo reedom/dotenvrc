@@ -45,11 +45,11 @@ export function parseEnvContent(code: string, options: EnvContentParserOptions):
   const context = createContext({ cwd, predefined });
 
   const ast = parse(code);
-  console.log(JSON.stringify(ast, null, 2));
   ast.commands.filter(command => {
     return command.type === 'Command';
   })
     .forEach(command => {
+      context.temporal = {};
       parseTopLevelCommand(context, command as AST_CommandCommand)
     });
 
@@ -136,7 +136,6 @@ function parseTemporalAssignments(
   context: ExpandValueContext,
   assignmentPrefixes: Array<AST_AssignmentWord | AST_Word>
 ) {
-  context.temporal = {};
   assignmentPrefixes.forEach(node => {
     let [key, value] = extractAssignment(context, node);
     if (typeof value !== 'undefined') {
@@ -151,19 +150,25 @@ function parseExportCommand(context: ExpandValueContext, command: AST_CommandCom
   //    var1=x var2=y export ...
   // and life of each of prefix assignments is conditional:
   //   - If the `context` already has the variable, or following `export` exports it,
-  //     then it goes into context.
+  //     then it goes into the context.
   //   - Otherwise it is temporal.
   //
-  // For instance, if in the context of `context.exported = {var1: 10}` and then
-  // the following line comes:
+  // For instance, with the code below:
+  //   export var1=10
   //   var1=20 export var2=30
   // it results: `context.exported = {var1: 20, var2: 30}`.
+  // The temporal value assignment seems to be done after `export` in real script(zsh).
+  //   export name=jack
+  //   name=ann export greeting="Hello, $name"
+  // this results: `context.exported = {greeting: 'Hello, jack', name: 'ann'}`.
   const assignmentPrefixes = collectAssignmentNodes(command.prefix);
-  parseTemporalAssignments(context, assignmentPrefixes);
-  Object.entries(context.temporal)
-    .forEach(([key, value]) => assignToContextIfExists(context, key, value as string));
 
-  if (!command.suffix?.length) return;
+  if (!command.suffix?.length) {
+    parseTemporalAssignments(context, assignmentPrefixes);
+    Object.entries(context.temporal)
+      .forEach(([key, value]) => assignToContextIfExists(context, key, value as string));
+    return;
+  }
 
   // [hasUnset]
   // `export -n` means "un-export", remove specified variable(s) from `context.export`.
@@ -185,7 +190,6 @@ function parseExportCommand(context: ExpandValueContext, command: AST_CommandCom
         // This module does not support this flag (export function[s]).
         return;
       }
-      if (!isKindOfAssignmentNode(word)) return;
 
       const [key, value] = extractAssignment(context, word);
       if (hasUnset) {
@@ -194,6 +198,10 @@ function parseExportCommand(context: ExpandValueContext, command: AST_CommandCom
         assignToExport(context, key, value);
       }
     });
+
+  parseTemporalAssignments(context, assignmentPrefixes);
+  Object.entries(context.temporal)
+    .forEach(([key, value]) => assignToContextIfExists(context, key, value as string));
 }
 
 function collectParamExpansions(word: AST_Word | AST_AssignmentWord): AST_ParameterExpansion[] {
@@ -218,6 +226,18 @@ function assignToExport(context: ExpandValueContext, key: string, value: string 
   }
 }
 
+/**
+ * Unset a variable from `context.exported`.
+ */
+function unsetExport(context: ExpandValueContext, key: string, value: string | undefined) {
+  delete context.exported[key];
+  if (typeof value !== 'undefined') {
+    // e.g.  export -n var1=60
+    // In this case, assign affects to `internal` and `temporal`.
+    assignToContextIfExists(context, key, value);
+  }
+}
+
 function assignToInternal(context: ExpandValueContext, key: string, value: string) {
   context.internal[key] = value;
   // If the value has already been exported, assign the new value, too,
@@ -236,17 +256,5 @@ function assignToContextIfExists(context: ExpandValueContext, key: string, value
   }
   if (Object.prototype.hasOwnProperty.call(context.exported, key)) {
     context.exported[key] = value;
-  }
-}
-
-/**
- * Unset a variable from `context.exported`.
- */
-function unsetExport(context: ExpandValueContext, key: string, value: string | undefined) {
-  delete context.exported[key];
-  if (typeof value !== 'undefined') {
-    // e.g.  export -n var1=60
-    // In this case, assign affects to `internal` and `temporal`.
-    assignToContextIfExists(context, key, value);
   }
 }

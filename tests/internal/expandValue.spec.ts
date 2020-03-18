@@ -68,11 +68,6 @@ describe('expandValue', () => {
     expect(actual).toBe('var=smile://x.predefined.example.com:8080/');
   });
 
-  it('should remain escaped quote in result', () => {
-    const actual = expandValue(`var='rock\\'n\\'roll'`, 4, [], context);
-    expect(actual).toBe(`var=rock'n'roll`);
-  });
-
   it('should convert special expressions with backslashes`', () => {
     let actual = expandValue('var=|\\n\\r\\t\\v|', 4, [], context);
     expect(actual).toBe('var=|\n\r\t\v|');
