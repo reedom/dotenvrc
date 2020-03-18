@@ -1,3 +1,4 @@
-import { expandValue } from '#/internal/expandValue';
+import { expandValue } from './expandValue';
+import { parseEnvContent, EnvContentParserOptions } from './parseEnvContent';
 
-export { expandValue };
+export { expandValue, parseEnvContent, EnvContentParserOptions };

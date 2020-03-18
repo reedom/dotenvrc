@@ -5,8 +5,8 @@ import {
   createTextReader,
   TextScanner,
   createTextScanner,
-} from '#/internal/TextReader';
-import TextWriter from '#/internal/TextWriter';
+} from './TextReader';
+import TextWriter from './TextWriter';
 
 export interface ExpandValueContext {
   cwd: string;

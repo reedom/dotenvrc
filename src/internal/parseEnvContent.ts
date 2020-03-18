@@ -1,4 +1,4 @@
-import { createContext, expandValue, ExpandValueContext } from '#/internal/expandValue';
+import { createContext, expandValue, ExpandValueContext } from './expandValue';
 import parse, {
   AST_AssignmentWord,
   AST_CommandCommand,
