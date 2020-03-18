@@ -10,7 +10,6 @@
     "watch": "tsc -w",
     "clean": "rimraf dist/*",
     "build": "npm-run-all clean tsc && cp package.json dist/",
-    "publish": "cd dist && npm publish",
     "lint": "eslint --ext .ts,.js src/",
     "precommit": "lint-staged",
     "test": "jest"
@@ -27,21 +26,25 @@
   },
   "keywords": [
     "direnv",
+    ".envrc",
     "envrc",
     "shell",
     "config",
+    "settings",
     "export",
     "environment",
     "variable",
     "sh",
     "posix",
     "bash",
-    "zsh"
+    "zsh",
+    "dotenv",
+    "jest"
   ],
   "author": "HANAI, Tohru",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
-    "url": "https://github.com/reedom/dotenvrc"
+    "url": "https://github.com/reedom/dotenvrc/issues"
   },
   "homepage": "https://github.com/reedom/dotenvrc/",
   "dependencies": {
