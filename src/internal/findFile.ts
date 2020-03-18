@@ -26,7 +26,6 @@ export const findFile = ({
 
     const parentDir = path.join(dir, '..');
     if (parentDir === dir) {
-      console.log('give up:', parentDir);
       // Possibly at the root dir.
       return null;
     }
