@@ -129,7 +129,7 @@ declare module 'bash-parser' {
     type: 'ArithmeticExpansion';
     expression: string;
     resolved: boolean;
-    arithmeticAST: Object;
+    arithmeticAST: object;
     loc: AST_Loc;
   }
 
@@ -137,7 +137,7 @@ declare module 'bash-parser' {
     type: 'CommandExpansion';
     command: string;
     resolved: boolean;
-    commandAST: Object;
+    commandAST: object;
     loc: AST_Loc;
   }
 
@@ -160,7 +160,7 @@ declare module 'bash-parser' {
      * resolve an alias. It should return the resolved code if the alias exists, otherwise null.
      * If the option is not specified, the parser won't try to resolve any alias.
      */
-    resolveAlias?: (name: string) => String;
+    resolveAlias?: (name: string) => string;
     /**
      * a callback to resolve environment variables. If specified, the parser call it whenever it
      * need to resolve an environment variable. It should return the value if the variable is
@@ -186,21 +186,21 @@ declare module 'bash-parser' {
      * to resolve a parameter expansion. It should return the result of the expansion. If the
      * option is not specified, the parser won't try to resolve any parameter expansion.
      */
-    resolveParameter?: (parameterAST: Object) => string;
+    resolveParameter?: (parameterAST: object) => string;
     /**
      * a callback to execute a simple_command. If specified, the parser call it whenever it need to
      * resolve a command substitution. It receive as argument the AST of a simple_command node, and
      * shall return the output of the command. If the option is not specified, the parser won't try
      * to resolve any command substitution.
      */
-    execCommand?: (cmdAST: Object) => string;
+    execCommand?: (cmdAST: object) => string;
     /**
      * a callback to execute a complete_command in a new shell process. If specified, the parser
      * call it whenever it need to resolve a subshell statement. It receive as argument the AST of
      * a complete_command node, and shall return the output of the command. If the option is not
      * specified, the parser won't try to resolve any subshell statement.
      */
-    execShellScript?: (cmdAST: Object) => string;
+    execShellScript?: (cmdAST: object) => string;
     /**
      * a callback to execute an arithmetic_expansion. If specified, the parser call it whenever it
      * need to resolve an arithmetic substitution. It receive as argument the AST of a
@@ -209,6 +209,6 @@ declare module 'bash-parser' {
      * Please note that the aritmethic expression AST is built using babylon, you cand find there
      * it's AST specification.
      */
-    runArithmeticExpression?: (arithmeticAST: Object) => string;
+    runArithmeticExpression?: (arithmeticAST: object) => string;
   }
 }
