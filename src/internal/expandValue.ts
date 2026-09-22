@@ -238,7 +238,7 @@ export function createBackslashHandler(
         } else {
           try {
             writer.write(String.fromCodePoint(val));
-          } catch (err) {
+          } catch {
             writer.write('■'); // tofu, the character I'm familiar with on this situation.
           }
         }
